@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบพัสดุหอพัก - สำหรับผู้เช่า</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    body {
+      background: linear-gradient(135deg, #e0c3fc 0%, #8ec5fc 100%);
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+    }
+    .card-box {
+      width: 100%;
+      max-width: 800px;
+      background: rgba(255, 255, 255, 0.92);
+      backdrop-filter: blur(12px);
+      border-radius: 24px;
+      padding: 35px;
+      box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+    }
+    .btn-custom {
+      background: linear-gradient(135deg, #198754 0%, #157347 100%);
+      color: white;
+      border-radius: 14px;
+      font-weight: bold;
+      border: none;
+      transition: all 0.2s ease;
+    }
+    .btn-custom:hover {
+      background: linear-gradient(135deg, #157347 0%, #0e4b2e 100%);
+      color: white;
+      transform: translateY(-1px);
+    }
+    .menu-card {
+      border: 2px solid #e9ecef;
+      border-radius: 18px;
+      padding: 25px;
+      cursor: pointer;
+      background: white;
+      transition: all 0.25s ease;
+    }
+    .menu-card:hover {
+      border-color: #198754;
+      transform: translateY(-4px);
+      box-shadow: 0 10px 20px rgba(25, 135, 84, 0.15);
+    }
+  </style>
+</head>
+<body>
+
+  <!-- หน้าแรกเลือกสถานะการใช้งาน -->
+  <div class="card-box text-center" id="main-menu-card" style="max-width: 550px;">
+    <div class="mb-4">
+      <div class="d-inline-flex align-items-center justify-content-center bg-success-subtle text-success rounded-circle mb-3" style="width: 75px; height: 75px;">
+        <i class="fa-solid fa-boxes-packing fs-1"></i>
+      </div>
+      <h3 class="fw-bold text-success m-0">ระบบพัสดุหอพัก</h3>
+      <p class="text-muted small mt-1">กรุณาเลือกรูปแบบการใช้งาน</p>
+    </div>
+
+    <div class="row g-3">
+      <!-- ตัวเลือก 1: เคยเข้าใช้งานแล้ว -->
+      <div class="col-12">
+        <div class="menu-card d-flex align-items-center text-start" onclick="showForm('existing')">
+          <div class="bg-success text-white rounded-circle p-3 me-3">
+            <i class="fa-solid fa-user-check fs-4"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark m-0">เคยใช้งานแล้ว</h5>
+            <small class="text-muted">ค้นหาพัสดุด้วยเลขห้อง หรือ ชื่ออย่างเดียวได้เลย</small>
+          </div>
+        </div>
+      </div>
+
+      <!-- ตัวเลือก 2: ไม่เคยใช้งาน (ลงทะเบียนใหม่) -->
+      <div class="col-12">
+        <div class="menu-card d-flex align-items-center text-start" onclick="showForm('new')">
+          <div class="bg-primary text-white rounded-circle p-3 me-3">
+            <i class="fa-solid fa-user-plus fs-4"></i>
+          </div>
+          <div>
+            <h5 class="fw-bold text-dark m-0">ใช้งานครั้งแรก (ลงทะเบียน)</h5>
+            <small class="text-muted">ผูกอีเมลสำหรับรับการแจ้งเตือนพัสดุเข้า</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ฟอร์มสำหรับผู้ที่เคยใช้งานแล้ว -->
+  <div class="card-box text-center" id="existing-user-card" style="max-width: 450px; display: none;">
+    <div class="mb-4">
+      <h4 class="fw-bold text-success m-0"><i class="fa-solid fa-magnifying-glass me-2"></i>ตรวจสอบพัสดุ</h4>
+      <p class="text-muted small mt-1">กรอกเลขห้อง หรือชื่อ เพื่อค้นหา</p>
+    </div>
+
+    <div class="mb-3 text-start">
+      <label class="form-label fw-bold">เลขห้อง หรือ ชื่อ (ไม่ต้องมีนามสกุลได้)</label>
+      <input type="text" id="existingKeyword" class="form-control rounded-3 py-2" placeholder="เช่น 204 หรือ สมชาย">
+    </div>
+
+    <button class="btn btn-custom w-100 py-2 shadow-sm fs-5 mb-2" onclick="searchExistingUser()">เข้าสู่ระบบ / ค้นหาพัสดุ</button>
+    <button class="btn btn-link text-muted btn-sm text-decoration-none" onclick="backToMainMenu()"><i class="fa-solid fa-arrow-left me-1"></i> ย้อนกลับหน้าแรก</button>
+  </div>
+
+  <!-- ฟอร์มลงทะเบียนผู้ใช้งานใหม่ -->
+  <div class="card-box" id="new-user-card" style="max-width: 480px; display: none;">
+    <div class="text-center mb-4">
+      <h4 class="fw-bold text-success m-0"><i class="fa-solid fa-address-card me-2"></i>ลงทะเบียนผู้ใช้ใหม่</h4>
+      <p class="text-muted small mt-1">กรอกข้อมูลเพื่อรับแจ้งเตือนเมื่อมีพัสดุมาถึง</p>
+    </div>
+
+    <div class="mb-2">
+      <label class="form-label fw-bold">เลขห้อง</label>
+      <input type="text" id="regRoom" class="form-control rounded-3" placeholder="เช่น 204">
+    </div>
+    <div class="mb-2">
+      <label class="form-label fw-bold">ชื่อ-นามสกุล</label>
+      <input type="text" id="regName" class="form-control rounded-3" placeholder="เช่น สมชาย ใจดี">
+    </div>
+    <div class="mb-2">
+      <label class="form-label fw-bold">อีเมล (สำหรับรับแจ้งเตือน)</label>
+      <input type="email" id="regEmail" class="form-control rounded-3" placeholder="example@gmail.com">
+    </div>
+    <div class="mb-4">
+      <label class="form-label fw-bold">เบอร์โทรศัพท์ (ถ้ามี)</label>
+      <input type="tel" id="regPhone" class="form-control rounded-3" placeholder="0812345678">
+    </div>
+
+    <button class="btn btn-custom w-100 py-2 rounded-3 fs-5 mb-2" id="btnSaveReg" onclick="saveRegistration()">ยืนยันลงทะเบียน</button>
+    <div class="text-center">
+      <button class="btn btn-link text-muted btn-sm text-decoration-none" onclick="backToMainMenu()"><i class="fa-solid fa-arrow-left me-1"></i> ย้อนกลับหน้าแรก</button>
+    </div>
+  </div>
+
+  <!-- หน้าแสดงรายการพัสดุของผู้เช่า -->
+  <div class="card-box" id="parcel-card" style="display: none;">
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap gap-2">
+      <div>
+        <h4 class="fw-bold text-success m-0"><i class="fa-solid fa-box-open me-2"></i>รายการพัสดุของคุณ</h4>
+        <div class="text-muted small mt-1" id="userTitleInfo">ห้อง: - | คุณ: -</div>
+      </div>
+      <button class="btn btn-outline-danger rounded-pill px-3" onclick="logoutUser()">ออกจากระบบ</button>
+    </div>
+
+    <div class="table-responsive">
+      <table class="table table-hover table-bordered align-middle text-center bg-white rounded-4 overflow-hidden shadow-sm" id="userParcelTable">
+        <thead class="table-success">
+          <tr>
+            <th>ขนส่ง</th>
+            <th>เลขพัสดุ</th>
+            <th style="width: 140px;">วันที่มาถึง</th>
+            <th>สถานะ</th>
+            <th>รูปภาพ</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  <script>
+    const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwA22JDvhdj2MhYS-x8bRTy19FFPZKW38djVrIH0r-Ib6skE-gtF0o8wLVx4eksczLCHg/exec"; 
+
+    function formatDate(dateStr) {
+      if (!dateStr || dateStr === "-") return "-";
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr; 
+      
+      const day = String(d.getDate()).padStart(2, '0');
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const year = d.getFullYear();
+      const hours = String(d.getHours()).padStart(2, '0');
+      const minutes = String(d.getMinutes()).padStart(2, '0');
+      
+      return `${day}/${month}/${year}<br><small class="text-muted">${hours}:${minutes} น.</small>`;
+    }
+
+    function showForm(type) {
+      document.getElementById('main-menu-card').style.display = 'none';
+      if (type === 'existing') {
+        document.getElementById('existing-user-card').style.display = 'block';
+      } else if (type === 'new') {
+        document.getElementById('new-user-card').style.display = 'block';
+      }
+    }
+
+    function backToMainMenu() {
+      document.getElementById('main-menu-card').style.display = 'block';
+      document.getElementById('existing-user-card').style.display = 'none';
+      document.getElementById('new-user-card').style.display = 'none';
+      document.getElementById('parcel-card').style.display = 'none';
+    }
+
+    function searchExistingUser() {
+      const kw = document.getElementById('existingKeyword').value.trim();
+      if (!kw) return alert("กรุณากรอกเลขห้อง หรือ ชื่อของคุณค่ะ");
+      showUserParcels(kw);
+    }
+
+    function saveRegistration() {
+      const room = document.getElementById('regRoom').value.trim();
+      const name = document.getElementById('regName').value.trim();
+      const email = document.getElementById('regEmail').value.trim();
+      const phone = document.getElementById('regPhone').value.trim();
+
+      if (!room || !name || !email) return alert("กรุณากรอกเลขห้อง ชื่อ-นามสกุล และอีเมลให้ครบถ้วนค่ะ");
+
+      const btn = document.getElementById('btnSaveReg');
+      btn.disabled = true;
+      btn.innerText = "กำลังบันทึกข้อมูล...";
+
+      fetch(SCRIPT_URL, {
+        method: 'POST',
+        body: JSON.stringify({
+          action: 'registerStudent',
+          room: room,
+          name: name,
+          email: email,
+          phone: phone
+        })
+      })
+      .then(res => res.text())
+      .then(res => {
+        btn.disabled = false;
+        btn.innerText = "ยืนยันลงทะเบียน";
+        if (res === "SUCCESS") {
+          alert("ลงทะเบียนเรียบร้อยแล้วค่ะ!");
+          document.getElementById('new-user-card').style.display = 'none';
+          showUserParcels(room, name);
+        } else {
+          alert("เกิดข้อผิดพลาดในการบันทึกข้อมูลค่ะ");
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btn.innerText = "ยืนยันลงทะเบียน";
+        alert("เกิดข้อผิดพลาดในการเชื่อมต่อค่ะ");
+      });
+    }
+
+    function showUserParcels(kw, defaultName = "") {
+      document.getElementById('existing-user-card').style.display = 'none';
+      document.getElementById('new-user-card').style.display = 'none';
+      document.getElementById('main-menu-card').style.display = 'none';
+      document.getElementById('parcel-card').style.display = 'block';
+
+      const tbody = document.querySelector('#userParcelTable tbody');
+      tbody.innerHTML = "<tr><td colspan='5' class='text-muted py-4'>กำลังดึงข้อมูลพัสดุ...</td></tr>";
+
+      // ตั้งค่าเริ่มต้นของชื่อ/ห้องให้แสดงสวยงามก่อนเสมอ
+      const isRoomNumber = !isNaN(kw);
+      if (isRoomNumber) {
+        document.getElementById('userTitleInfo').innerText = `ห้อง: ${kw} | คุณ: ${defaultName || '-'}`;
+      } else {
+        document.getElementById('userTitleInfo').innerText = `ค้นด้วยชื่อ: คุณ${kw}`;
+      }
+
+      fetch(`${SCRIPT_URL}?action=getParcelsByRoom&keyword=${encodeURIComponent(kw)}`)
+        .then(res => res.json())
+        .then(list => {
+          tbody.innerHTML = "";
+          if (!list || list.length === 0) {
+            tbody.innerHTML = "<tr><td colspan='5' class='text-muted py-4'>ไม่พบรายการพัสดุสำหรับข้อมูลนี้ค่ะ</td></tr>";
+            return;
+          }
+
+          // แสดงห้องและชื่อจากรายการแรกที่เจอในฐานข้อมูล
+          document.getElementById('userTitleInfo').innerText = `ห้อง: ${list[0].room} | คุณ: ${list[0].tenantName || '-'}`;
+
+          list.forEach(item => {
+            const isReceived = String(item.status).includes('ได้รับพัสดุแล้ว');
+            const statusBadge = isReceived 
+              ? '<span class="badge bg-success px-3 py-2">ได้รับพัสดุแล้ว</span>' 
+              : '<span class="badge bg-warning text-dark px-3 py-2">ยังไม่ได้รับ ⏳</span>';
+            
+            const hasValidImg = item.img && item.img.startsWith('http');
+            const imgBtn = hasValidImg 
+              ? `<a href="${item.img}" target="_blank" class="btn btn-sm btn-outline-primary rounded-pill px-3">ดูรูป 📷</a>` 
+              : '<span class="text-muted">-</span>';
+
+            tbody.innerHTML += `
+              <tr>
+                <td class="fw-bold">${item.courier}</td>
+                <td class="font-monospace text-primary fw-bold">${item.tracking}</td>
+                <td>${formatDate(item.date)}</td>
+                <td>${statusBadge}</td>
+                <td>${imgBtn}</td>
+              </tr>
+            `;
+          });
+        })
+        .catch(err => {
+          tbody.innerHTML = "<tr><td colspan='5' class='text-danger py-4'>ดึงข้อมูลไม่สำเร็จ กรุณาลองใหม่อีกครั้งค่ะ</td></tr>";
+        });
+    }
+
+    function logoutUser() {
+      document.getElementById('existingKeyword').value = '';
+      document.getElementById('regRoom').value = '';
+      document.getElementById('regName').value = '';
+      document.getElementById('regEmail').value = '';
+      document.getElementById('regPhone').value = '';
+      backToMainMenu();
+    }
+  </script>
+</body>
+</html>
