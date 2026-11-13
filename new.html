@@ -1,0 +1,697 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ระบบ QC น้ำตาลมะพร้าว - โอ้วเจริญพร แม่กลอง</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    body {
+      font-family: 'Prompt', sans-serif;
+      background-color: #FDF8F2;
+      color: #4A2E1B;
+    }
+    .caramel-gradient {
+      background: linear-gradient(135deg, #8B4513 0%, #B86B28 100%);
+    }
+    .soft-card {
+      background: #FFFFFF;
+      border: 1px solid #F0E2D0;
+      box-shadow: 0 4px 15px rgba(139, 69, 19, 0.06);
+      transition: all 0.3s ease;
+    }
+    .tab-active {
+      background-color: #8B4513;
+      color: #FFFFFF;
+      box-shadow: 0 4px 12px rgba(139, 69, 19, 0.3);
+      transform: translateY(-2px);
+    }
+    .tab-inactive {
+      background-color: #F5EBE0;
+      color: #7A5236;
+    }
+    /* ลูกเล่นอนิเมชันเปลวไฟกะพริบ */
+    @keyframes pulse-flame {
+      0%, 100% { transform: scale(1); opacity: 1; filter: drop-shadow(0 0 2px rgba(255,140,0,0.6)); }
+      50% { transform: scale(1.15); opacity: 0.85; filter: drop-shadow(0 0 8px rgba(255,69,0,0.9)); }
+    }
+    .animate-flame {
+      animation: pulse-flame 1.5s infinite ease-in-out;
+      display: inline-block;
+    }
+    /* อนิเมชันกระเพื่อมเบาๆ */
+    @keyframes soft-bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    .animate-bounce-soft {
+      animation: soft-bounce 2s infinite ease-in-out;
+    }
+    /* เอฟเฟกต์กดปุ่มยุบตัว */
+    button:active {
+      transform: scale(0.96);
+    }
+  </style>
+</head>
+<body class="min-h-screen pb-12">
+
+  <!-- Header -->
+  <header class="caramel-gradient text-white p-5 rounded-b-3xl shadow-lg relative overflow-hidden">
+    <div class="absolute -right-6 -top-6 w-24 h-24 bg-white/10 rounded-full blur-xl pointer-events-none"></div>
+    <div class="max-w-xl mx-auto relative z-10">
+      <div class="flex justify-between items-center">
+        <div>
+          <span class="text-xs bg-white/20 px-2.5 py-1 rounded-full backdrop-blur-sm">ระบบควบคุมคุณภาพ ปวส.2</span>
+          <h1 class="text-xl font-bold mt-1 flex items-center gap-1.5">
+            <span>🍯</span> โอ้วเจริญพร QC System <span class="animate-flame">🔥</span>
+          </h1>
+          <p class="text-xs text-amber-100">โรงงานน้ำตาลมะพร้าวแท้ แม่กลอง</p>
+        </div>
+        <div class="text-right">
+          <div id="header-date" class="text-sm font-semibold"></div>
+          <div id="header-time" class="text-xs text-amber-200"></div>
+        </div>
+      </div>
+
+      <!-- เมนูหลัก 3 ปุ่ม -->
+      <div class="grid grid-cols-3 gap-1.5 mt-4 bg-black/15 p-1.5 rounded-2xl backdrop-blur-sm">
+        <button onclick="switchMainView('record')" id="nav-record" class="py-2.5 rounded-xl font-semibold text-xs bg-white text-[#8B4513] shadow-md transition-all duration-300">
+          📝 บันทึก
+        </button>
+        <button onclick="switchMainView('history')" id="nav-history" class="py-2.5 rounded-xl font-semibold text-xs text-white hover:bg-white/10 transition-all duration-300">
+          📅 ประวัติ
+        </button>
+        <button onclick="switchMainView('summary')" id="nav-summary" class="py-2.5 rounded-xl font-semibold text-xs text-white hover:bg-white/10 transition-all duration-300">
+          📊 สรุปผล
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-xl mx-auto px-4 mt-5">
+
+    <!-- ==================== หน้า 1: บันทึกข้อมูล ==================== -->
+    <div id="view-record" class="space-y-5 transition-all duration-300">
+      <div class="grid grid-cols-3 gap-2">
+        <button onclick="switchPoint(1)" id="tab-p1" class="tab-active py-3 px-2 rounded-2xl text-center transition-all duration-300">
+          <div class="text-lg animate-bounce-soft">🌡️</div>
+          <div class="text-xs font-semibold mt-0.5">จุดอุณหภูมิ</div>
+        </button>
+        <button onclick="switchPoint(2)" id="tab-p2" class="tab-inactive py-3 px-2 rounded-2xl text-center transition-all duration-300">
+          <div class="text-lg">📋</div>
+          <div class="text-xs font-semibold mt-0.5">จุดเช็กถาด</div>
+        </button>
+        <button onclick="switchPoint(3)" id="tab-p3" class="tab-inactive py-3 px-2 rounded-2xl text-center transition-all duration-300">
+          <div class="text-lg">📦</div>
+          <div class="text-xs font-semibold mt-0.5">จุดบรรจุภัณฑ์</div>
+        </button>
+      </div>
+
+      <!-- จุดที่ 1: อุณหภูมิ (มีลูกเล่นความร้อนเคลื่อนไหว) -->
+      <div id="form-p1" class="soft-card p-5 rounded-3xl space-y-4">
+        <div class="flex justify-between items-center border-b border-amber-100 pb-3">
+          <div>
+            <h2 class="font-bold text-lg text-[#8B4513] flex items-center gap-1.5">
+              <span>🌡️ บันทึกอุณหภูมิน้ำตาล</span> <span class="animate-flame text-base">🔥</span>
+            </h2>
+            <p class="text-xs text-gray-500">ตรวจสอบอุณหภูมิรอบการเคี่ยวแบบเรียลไทม์</p>
+          </div>
+          <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium shadow-sm">จุดที่ 1</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">รอบการเคี่ยว</label>
+            <select id="p1-round" class="w-full p-3 rounded-xl border border-amber-200 bg-amber-50/40 font-semibold focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition">
+              <option value="รอบที่ 1">รอบที่ 1</option>
+              <option value="รอบที่ 2">รอบที่ 2</option>
+              <option value="รอบที่ 3">รอบที่ 3</option>
+              <option value="รอบที่ 4">รอบที่ 4</option>
+              <option value="รอบที่ 5">รอบที่ 5</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">อุณหภูมิ (°C)</label>
+            <input type="number" step="0.1" id="p1-temp" placeholder="เช่น 115.5" oninput="checkTempStatus()"
+              class="w-full p-3 rounded-xl border border-amber-200 text-lg font-bold text-center focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+          </div>
+        </div>
+
+        <!-- กล่องสถานะอุณหภูมิแบบเปลี่ยนสีและมีอนิเมชัน -->
+        <div id="temp-status-box" class="p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-center text-xs text-gray-500 transition-all duration-300 shadow-sm">
+          🔥 กรอกอุณหภูมิเพื่อตรวจสอบเกณฑ์ความร้อน (มาตรฐาน 110°C - 120°C)
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">📸 ถ่ายภาพหลักฐาน (หน้าจอวัด)</label>
+          <input type="file" accept="image/*" capture="environment" id="p1-photo" onchange="previewImage(this, 'p1-preview')"
+            class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200 transition cursor-pointer" />
+          <img id="p1-preview" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-amber-200 shadow-inner" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">หมายเหตุ</label>
+          <input type="text" id="p1-note" placeholder="เช่น เคี่ยวได้ที่แล้ว สีสวยกลิ่นหอม..." class="w-full p-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+        </div>
+
+        <button onclick="saveRecord(1)" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20 transition-all duration-200">
+          💾 บันทึกรายงานอุณหภูมิ
+        </button>
+
+        <div class="pt-3 border-t border-amber-100">
+          <h3 class="text-xs font-bold text-[#8B4513] mb-2">📋 สรุปอุณหภูมิวันนี้</h3>
+          <div class="overflow-x-auto">
+            <table class="w-full text-xs text-left">
+              <thead>
+                <tr class="bg-amber-50 text-amber-900">
+                  <th class="p-2">เวลา</th>
+                  <th class="p-2">รอบ</th>
+                  <th class="p-2">อุณหภูมิ</th>
+                  <th class="p-2">สถานะ</th>
+                </tr>
+              </thead>
+              <tbody id="today-temp-table">
+                <tr><td colspan="4" class="p-3 text-center text-gray-400">ยังไม่มีข้อมูลอุณหภูมิวันนี้</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- จุดที่ 2: เช็กถาด -->
+      <div id="form-p2" class="hidden soft-card p-5 rounded-3xl space-y-4">
+        <div class="flex justify-between items-center border-b border-amber-100 pb-3">
+          <div>
+            <h2 class="font-bold text-lg text-[#8B4513]">📋 ตรวจสอบถาดเซ็ตน้ำตาล</h2>
+            <p class="text-xs text-gray-500">ตรวจสอบความสะอาดและความพร้อมก่อนเท</p>
+          </div>
+          <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium shadow-sm">จุดที่ 2</span>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">หมายเลขชุดถาด</label>
+          <input type="text" id="p2-tray-id" placeholder="เช่น ถาดชุดที่ 1 (ใบที่ 1-20)" class="w-full p-3 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+        </div>
+
+        <div class="space-y-2.5 bg-amber-50/50 p-3.5 rounded-2xl border border-amber-100">
+          <p class="text-xs font-semibold text-amber-900 mb-1">รายการตรวจสอบ:</p>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p2-chk1" checked class="w-4 h-4 accent-[#8B4513]" /><span>ถาดสะอาด ไม่มีคราบหรือฝุ่น</span></label>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p2-chk2" checked class="w-4 h-4 accent-[#8B4513]" /><span>ถาดแห้งสนิท ไม่มีน้ำขัง</span></label>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p2-chk3" checked class="w-4 h-4 accent-[#8B4513]" /><span>สภาพสมบูรณ์ ไม่บิดเบี้ยว</span></label>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">📸 ถ่ายภาพสภาพถาด</label>
+          <input type="file" accept="image/*" capture="environment" id="p2-photo" onchange="previewImage(this, 'p2-preview')"
+            class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200 transition cursor-pointer" />
+          <img id="p2-preview" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-amber-200 shadow-inner" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">หมายเหตุ</label>
+          <input type="text" id="p2-note" placeholder="รายละเอียดเพิ่มเติม..." class="w-full p-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+        </div>
+
+        <button onclick="saveRecord(2)" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20 transition-all duration-200">
+          💾 บันทึกผลเช็กถาด
+        </button>
+      </div>
+
+      <!-- จุดที่ 3: บรรจุภัณฑ์ -->
+      <div id="form-p3" class="hidden soft-card p-5 rounded-3xl space-y-4">
+        <div class="flex justify-between items-center border-b border-amber-100 pb-3">
+          <div>
+            <h2 class="font-bold text-lg text-[#8B4513]">📦 ตรวจสอบบรรจุภัณฑ์</h2>
+            <p class="text-xs text-gray-500">ตรวจสอบความเรียบร้อยก่อนแพ็กส่ง</p>
+          </div>
+          <span class="text-xs bg-amber-100 text-amber-800 px-2.5 py-1 rounded-full font-medium shadow-sm">จุดที่ 3</span>
+        </div>
+
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="block text-xs font-semibold mb-1">ประเภทบรรจุภัณฑ์</label>
+            <select id="p3-pack-type" class="w-full p-2.5 rounded-xl border border-amber-200 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition">
+              <option value="ถุงซีลสุญญากาศ">ถุงซีลสุญญากาศ</option>
+              <option value="กระปุกพลาสติก">กระปุกพลาสติก</option>
+              <option value="กล่องบรรจุภัณฑ์">กล่องบรรจุภัณฑ์</option>
+              <option value="ปี๊บ / ถังบรรจุ">ปี๊บ / ถังบรรจุ</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold mb-1">จำนวน (ชิ้น)</label>
+            <input type="number" id="p3-qty" placeholder="เช่น 50" class="w-full p-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+          </div>
+        </div>
+
+        <div class="space-y-2.5 bg-amber-50/50 p-3.5 rounded-2xl border border-amber-100">
+          <p class="text-xs font-semibold text-amber-900 mb-1">รายการตรวจสอบ:</p>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p3-chk1" checked class="w-4 h-4 accent-[#8B4513]" /><span>สะอาด ไม่ฉีกขาด</span></label>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p3-chk2" checked class="w-4 h-4 accent-[#8B4513]" /><span>ซีลปิดสนิท ไม่รั่วซึม</span></label>
+          <label class="flex items-center space-x-2.5 text-sm cursor-pointer hover:opacity-80 transition"><input type="checkbox" id="p3-chk3" checked class="w-4 h-4 accent-[#8B4513]" /><span>ติดฉลากถูกต้องชัดเจน</span></label>
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">📸 ถ่ายภาพบรรจุภัณฑ์</label>
+          <input type="file" accept="image/*" capture="environment" id="p3-photo" onchange="previewImage(this, 'p3-preview')"
+            class="w-full text-xs text-gray-500 file:mr-3 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-semibold file:bg-amber-100 file:text-amber-900 hover:file:bg-amber-200 transition cursor-pointer" />
+          <img id="p3-preview" class="hidden mt-2 h-32 w-full object-cover rounded-xl border border-amber-200 shadow-inner" />
+        </div>
+
+        <div>
+          <label class="block text-xs font-semibold mb-1">หมายเหตุ</label>
+          <input type="text" id="p3-note" placeholder="รายละเอียดเพิ่มเติม..." class="w-full p-2.5 rounded-xl border border-amber-200 text-sm focus:outline-none focus:ring-2 focus:ring-amber-500/30 transition" />
+        </div>
+
+        <button onclick="saveRecord(3)" class="w-full py-3.5 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold shadow-lg shadow-emerald-600/20 transition-all duration-200">
+          💾 บันทึกผลบรรจุภัณฑ์
+        </button>
+      </div>
+
+      <!-- สรุปยอดรวมด้านล่าง -->
+      <div class="soft-card p-4 rounded-3xl">
+        <div class="flex justify-between items-center mb-3">
+          <div class="flex items-center space-x-2">
+            <span class="text-xl animate-bounce-soft">📊</span>
+            <div>
+              <h3 class="text-sm font-bold text-[#4A2E1B]">สรุปยอดบันทึก QC วันนี้</h3>
+              <p class="text-[11px] text-gray-500">ข้อมูลการตรวจสอบทั้งหมดประจำวัน</p>
+            </div>
+          </div>
+          <span id="total-today-badge" class="text-xs bg-amber-100 text-amber-900 px-3 py-1 rounded-full font-semibold shadow-sm">รวม 0 รายการ</span>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-3 rounded-2xl bg-[#FDF8F2] border border-amber-100 hover:shadow-md transition">
+            <div class="text-base">🌡️</div>
+            <div class="text-xs font-semibold mt-1">จุดอุณหภูมิ</div>
+            <div id="count-p1" class="text-xs text-amber-700 font-bold mt-1">0 รายการ</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-[#FDF8F2] border border-amber-100 hover:shadow-md transition">
+            <div class="text-base">📋</div>
+            <div class="text-xs font-semibold mt-1">จุดเช็กถาด</div>
+            <div id="count-p2" class="text-xs text-amber-700 font-bold mt-1">0 รายการ</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-[#FDF8F2] border border-amber-100 hover:shadow-md transition">
+            <div class="text-base">📦</div>
+            <div class="text-xs font-semibold mt-1">จุดบรรจุภัณฑ์</div>
+            <div id="count-p3" class="text-xs text-amber-700 font-bold mt-1">0 รายการ</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ==================== หน้า 2: ประวัติย้อนหลัง (ติ๊กเลือก) ==================== -->
+    <div id="view-history" class="hidden space-y-4 transition-all duration-300">
+      <div class="soft-card p-5 rounded-3xl space-y-4">
+        <div class="flex justify-between items-center">
+          <h2 class="font-bold text-lg text-[#8B4513]">📅 ประวัติการบันทึกย้อนหลัง</h2>
+          <button onclick="exportCSV()" class="text-xs bg-emerald-600 text-white px-3 py-1.5 rounded-xl font-semibold hover:bg-emerald-700 shadow-sm transition">
+            📥 โหลด Excel (CSV)
+          </button>
+        </div>
+
+        <div class="grid grid-cols-1 gap-3 bg-amber-50/70 p-3.5 rounded-2xl border border-amber-100">
+          <div>
+            <label class="block text-[11px] font-semibold text-amber-900 mb-1">เลือกวันที่:</label>
+            <input type="date" id="filter-date" onchange="renderHistory()" class="w-full p-2.5 rounded-xl border border-amber-200 text-xs bg-white font-semibold focus:outline-none" />
+          </div>
+
+          <div>
+            <label class="block text-[11px] font-semibold text-amber-900 mb-1.5">ติ๊กเลือกจุดตรวจที่ต้องการดู:</label>
+            <div class="grid grid-cols-2 gap-2 bg-white p-2.5 rounded-xl border border-amber-200 text-xs font-medium">
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" id="chk-all" checked onchange="toggleSelectAll(this)" class="w-4 h-4 accent-[#8B4513]" />
+                <span class="font-bold text-amber-900">ดูทั้งหมด</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" class="filter-chk w-4 h-4 accent-[#8B4513]" value="1" checked onchange="renderHistory()" />
+                <span>1. อุณหภูมิ</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" class="filter-chk w-4 h-4 accent-[#8B4513]" value="2" checked onchange="renderHistory()" />
+                <span>2. เช็กถาด</span>
+              </label>
+              <label class="flex items-center space-x-2 cursor-pointer">
+                <input type="checkbox" class="filter-chk w-4 h-4 accent-[#8B4513]" value="3" checked onchange="renderHistory()" />
+                <span>3. บรรจุภัณฑ์</span>
+              </label>
+            </div>
+          </div>
+        </div>
+
+        <div id="history-list" class="space-y-3"></div>
+      </div>
+    </div>
+
+    <!-- ==================== หน้า 3: สรุปผลภาพรวม ==================== -->
+    <div id="view-summary" class="hidden space-y-4 transition-all duration-300">
+      <div class="soft-card p-5 rounded-3xl space-y-4">
+        <div class="flex justify-between items-center border-b border-amber-100 pb-3">
+          <div>
+            <h2 class="font-bold text-lg text-[#8B4513]">📊 รายงานสรุปผลภาพรวม</h2>
+            <p class="text-xs text-gray-500">วิเคราะห์ข้อมูลเพื่อทำรายงาน ปวส.2</p>
+          </div>
+          <div class="flex bg-amber-100/70 p-1 rounded-xl">
+            <button onclick="setSummaryRange('week')" id="btn-range-week" class="px-3 py-1 rounded-lg text-xs font-bold bg-[#8B4513] text-white transition">รายสัปดาห์</button>
+            <button onclick="setSummaryRange('month')" id="btn-range-month" class="px-3 py-1 rounded-lg text-xs font-semibold text-amber-900 transition">รายเดือน</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-3 gap-2 text-center">
+          <div class="p-3 rounded-2xl bg-amber-50/60 border border-amber-100">
+            <div class="text-[11px] text-gray-500">ตรวจสอบทั้งหมด</div>
+            <div id="sum-total-count" class="text-lg font-bold text-[#8B4513] mt-1">0</div>
+            <div class="text-[10px] text-amber-800">รายการ</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-emerald-50/80 border border-emerald-200">
+            <div class="text-[11px] text-gray-500">ผ่านเกณฑ์มาตรฐาน</div>
+            <div id="sum-pass-rate" class="text-lg font-bold text-emerald-700 mt-1">0%</div>
+            <div id="sum-pass-count" class="text-[10px] text-emerald-600">0 รายการ</div>
+          </div>
+          <div class="p-3 rounded-2xl bg-amber-50/60 border border-amber-100">
+            <div class="text-[11px] text-gray-500">ต้องเฝ้าระวัง/แก้ไข</div>
+            <div id="sum-warn-count" class="text-lg font-bold text-amber-700 mt-1">0</div>
+            <div class="text-[10px] text-amber-800">รายการ</div>
+          </div>
+        </div>
+
+        <div class="bg-amber-50/40 p-4 rounded-2xl border border-amber-100 space-y-2.5">
+          <h3 class="text-xs font-bold text-[#8B4513]">📈 สัดส่วนการตรวจสอบแยกตามจุด</h3>
+          <div class="space-y-2 text-xs">
+            <div>
+              <div class="flex justify-between mb-1">
+                <span>🌡️ จุดที่ 1: อุณหภูมิน้ำตาล</span>
+                <span id="stat-p1" class="font-bold">0 ครั้ง (0%)</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden shadow-inner">
+                <div id="bar-p1" class="bg-amber-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1">
+                <span>📋 จุดที่ 2: เช็กถาดเซ็ตน้ำตาล</span>
+                <span id="stat-p2" class="font-bold">0 ครั้ง (0%)</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden shadow-inner">
+                <div id="bar-p2" class="bg-amber-700 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+            <div>
+              <div class="flex justify-between mb-1">
+                <span>📦 จุดที่ 3: ตรวจสอบบรรจุภัณฑ์</span>
+                <span id="stat-p3" class="font-bold">0 ครั้ง (0%)</span>
+              </div>
+              <div class="w-full bg-gray-200 h-2 rounded-full overflow-hidden shadow-inner">
+                <div id="bar-p3" class="bg-emerald-600 h-2 rounded-full transition-all duration-500" style="width: 0%"></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-white p-4 rounded-2xl border border-amber-200 space-y-2 shadow-sm">
+          <div class="flex items-center space-x-1.5 text-xs font-bold text-[#8B4513]">
+            <span>💡</span>
+            <span>บทวิเคราะห์และข้อเสนอแนะ (สำหรับใส่เล่มรายงาน ปวส.2)</span>
+          </div>
+          <p id="summary-insight-text" class="text-xs text-gray-600 leading-relaxed bg-amber-50/30 p-3 rounded-xl border border-amber-100">
+            กำลังประมวลผลข้อมูลสรุป...
+          </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+
+  <div id="photo-modal" onclick="this.classList.add('hidden')" class="hidden fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4 backdrop-blur-sm">
+    <div class="max-w-md w-full bg-white p-2 rounded-2xl shadow-2xl animate-bounce-soft">
+      <img id="modal-img" class="w-full rounded-xl" />
+      <p class="text-center text-xs text-gray-500 py-2">แตะเพื่อปิด</p>
+    </div>
+  </div>
+
+  <script>
+    const todayStr = new Date().toISOString().split('T')[0];
+    let qcRecords = JSON.parse(localStorage.getItem('oh_charoenporn_qc_v5')) || [
+      { id: 1, date: todayStr, time: '09:15', point: 1, pointName: 'จุดอุณหภูมิ', detail: 'รอบที่ 1 | 114.5 °C', status: 'ผ่านเกณฑ์', note: 'เดือดสวยงาม', photo: null },
+      { id: 2, date: todayStr, time: '09:30', point: 2, pointName: 'จุดเช็กถาด', detail: 'ถาดชุดที่ 1 | ผ่าน 3/3 ข้อ', status: 'ผ่านเกณฑ์', note: 'แห้งสะอาดดี', photo: null }
+    ];
+
+    let currentSummaryRange = 'week';
+
+    function initClock() {
+      const update = () => {
+        const now = new Date();
+        document.getElementById('header-date').innerText = now.toLocaleDateString('th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+        document.getElementById('header-time').innerText = 'เวลา ' + now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) + ' น.';
+      };
+      update();
+      setInterval(update, 1000);
+      document.getElementById('filter-date').value = todayStr;
+      updateDashboard();
+    }
+    window.onload = initClock;
+
+    function switchMainView(view) {
+      document.getElementById('view-record').classList.toggle('hidden', view !== 'record');
+      document.getElementById('view-history').classList.toggle('hidden', view !== 'history');
+      document.getElementById('view-summary').classList.toggle('hidden', view !== 'summary');
+
+      document.getElementById('nav-record').className = view === 'record' ? 'py-2.5 rounded-xl font-semibold text-xs bg-white text-[#8B4513] shadow-md transition-all duration-300' : 'py-2.5 rounded-xl font-semibold text-xs text-white hover:bg-white/10 transition-all duration-300';
+      document.getElementById('nav-history').className = view === 'history' ? 'py-2.5 rounded-xl font-semibold text-xs bg-white text-[#8B4513] shadow-md transition-all duration-300' : 'py-2.5 rounded-xl font-semibold text-xs text-white hover:bg-white/10 transition-all duration-300';
+      document.getElementById('nav-summary').className = view === 'summary' ? 'py-2.5 rounded-xl font-semibold text-xs bg-white text-[#8B4513] shadow-md transition-all duration-300' : 'py-2.5 rounded-xl font-semibold text-xs text-white hover:bg-white/10 transition-all duration-300';
+
+      if (view === 'history') renderHistory();
+      if (view === 'summary') renderSummary();
+    }
+
+    function switchPoint(point) {
+      [1, 2, 3].forEach(p => {
+        document.getElementById(`form-p${p}`).classList.toggle('hidden', p !== point);
+        document.getElementById(`tab-p${p}`).className = p === point ? 'tab-active py-3 px-2 rounded-2xl text-center transition-all duration-300' : 'tab-inactive py-3 px-2 rounded-2xl text-center transition-all duration-300';
+      });
+    }
+
+    // ตรวจสอบอุณหภูมิพร้อมเปลี่ยนสีกล่องสถานะแบบไดนามิก
+    function checkTempStatus() {
+      const val = parseFloat(document.getElementById('p1-temp').value);
+      const box = document.getElementById('temp-status-box');
+      if (isNaN(val)) {
+        box.className = 'p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-center text-xs text-gray-500 shadow-sm';
+        box.innerHTML = '🔥 กรอกอุณหภูมิเพื่อตรวจสอบเกณฑ์ความร้อน (มาตรฐาน 110°C - 120°C)';
+      } else if (val >= 110 && val <= 120) {
+        box.className = 'p-3.5 rounded-2xl bg-emerald-50 border border-emerald-300 text-center text-xs font-bold text-emerald-700 shadow-sm animate-bounce-soft';
+        box.innerHTML = '🟢 อุณหภูมิอยู่ในเกณฑ์มาตรฐานความร้อนที่เหมาะสม (พร้อมเทลงถาด)';
+      } else if (val < 110) {
+        box.className = 'p-3.5 rounded-2xl bg-amber-50 border border-amber-300 text-center text-xs font-bold text-amber-700 shadow-sm';
+        box.innerHTML = '🟡 อุณหภูมิต่ำกว่าเกณฑ์มาตรฐาน (ต้องเคี่ยวต่ออีกสักครู่)';
+      } else {
+        box.className = 'p-3.5 rounded-2xl bg-red-50 border border-red-300 text-center text-xs font-bold text-red-700 shadow-sm animate-pulse';
+        box.innerHTML = '🔴 อุณหภูมิสูงเกินเกณฑ์! ระวังน้ำตาลไหม้ รีบปรับลดไฟด่วน';
+      }
+    }
+
+    let currentPhotos = { 1: null, 2: null, 3: null };
+    function previewImage(input, previewId) {
+      const point = parseInt(previewId.charAt(1));
+      if (input.files && input.files[0]) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+          currentPhotos[point] = e.target.result;
+          const img = document.getElementById(previewId);
+          img.src = e.target.result;
+          img.classList.remove('hidden');
+        };
+        reader.readAsDataURL(input.files[0]);
+      }
+    }
+
+    function saveRecord(point) {
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString('th-TH', { hour: '2-digit', minute: '2-digit' });
+      let detail = '', status = 'ผ่านเกณฑ์', note = '', pointName = '';
+
+      if (point === 1) {
+        pointName = 'จุดอุณหภูมิ';
+        const round = document.getElementById('p1-round').value;
+        const temp = parseFloat(document.getElementById('p1-temp').value);
+        if (isNaN(temp)) return alert('กรุณากรอกอุณหภูมิก่อนบันทึก');
+        detail = `${round} | ${temp} °C`;
+        status = (temp >= 110 && temp <= 120) ? 'ผ่านเกณฑ์' : 'เฝ้าระวัง';
+        note = document.getElementById('p1-note').value;
+        document.getElementById('p1-temp').value = '';
+        document.getElementById('p1-note').value = '';
+        document.getElementById('p1-preview').classList.add('hidden');
+        document.getElementById('temp-status-box').className = 'p-3.5 rounded-2xl bg-gray-50 border border-gray-200 text-center text-xs text-gray-500 shadow-sm';
+        document.getElementById('temp-status-box').innerHTML = '🔥 กรอกอุณหภูมิเพื่อตรวจสอบเกณฑ์ความร้อน (มาตรฐาน 110°C - 120°C)';
+      } else if (point === 2) {
+        pointName = 'จุดเช็กถาด';
+        const trayId = document.getElementById('p2-tray-id').value || 'ถาดทั่วไป';
+        const passed = [1, 2, 3].filter(i => document.getElementById(`p2-chk${i}`).checked).length;
+        detail = `${trayId} | ผ่าน ${passed}/3 ข้อ`;
+        status = (passed === 3) ? 'ผ่านเกณฑ์' : 'ต้องแก้ไข';
+        note = document.getElementById('p2-note').value;
+        document.getElementById('p2-tray-id').value = '';
+        document.getElementById('p2-note').value = '';
+        document.getElementById('p2-preview').classList.add('hidden');
+      } else if (point === 3) {
+        pointName = 'จุดบรรจุภัณฑ์';
+        const packType = document.getElementById('p3-pack-type').value;
+        const qty = document.getElementById('p3-qty').value || '-';
+        const passed = [1, 2, 3].filter(i => document.getElementById(`p3-chk${i}`).checked).length;
+        detail = `${packType} (${qty} ชิ้น) | ผ่าน ${passed}/3 ข้อ`;
+        status = (passed === 3) ? 'ผ่านเกณฑ์' : 'ต้องแก้ไข';
+        note = document.getElementById('p3-note').value;
+        document.getElementById('p3-qty').value = '';
+        document.getElementById('p3-note').value = '';
+        document.getElementById('p3-preview').classList.add('hidden');
+      }
+
+      qcRecords.unshift({ id: Date.now(), date: todayStr, time: timeStr, point, pointName, detail, status, note, photo: currentPhotos[point] });
+      currentPhotos[point] = null;
+      localStorage.setItem('oh_charoenporn_qc_v5', JSON.stringify(qcRecords));
+      updateDashboard();
+      alert(`✅ บันทึกข้อมูล "${pointName}" เรียบร้อยแล้ว!`);
+    }
+
+    function updateDashboard() {
+      const todayRecords = qcRecords.filter(r => r.date === todayStr);
+      const tempRecords = todayRecords.filter(r => r.point === 1);
+
+      const tbody = document.getElementById('today-temp-table');
+      if (tempRecords.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="4" class="p-3 text-center text-gray-400">ยังไม่มีข้อมูลอุณหภูมิวันนี้</td></tr>`;
+      } else {
+        tbody.innerHTML = tempRecords.map(r => {
+          const parts = r.detail.split(' | ');
+          return `<tr><td class="p-2 text-gray-600">${r.time} น.</td><td class="p-2 font-semibold">${parts[0]}</td><td class="p-2 font-bold text-[#8B4513]">${parts[1]}</td><td class="p-2"><span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-100 text-emerald-700">${r.status}</span></td></tr>`;
+        }).join('');
+      }
+
+      const c1 = todayRecords.filter(r => r.point === 1).length;
+      const c2 = todayRecords.filter(r => r.point === 2).length;
+      const c3 = todayRecords.filter(r => r.point === 3).length;
+
+      document.getElementById('count-p1').innerText = `${c1} รายการ`;
+      document.getElementById('count-p2').innerText = `${c2} รายการ`;
+      document.getElementById('count-p3').innerText = `${c3} รายการ`;
+      document.getElementById('total-today-badge').innerText = `รวม ${todayRecords.length} รายการ`;
+    }
+
+    function toggleSelectAll(master) {
+      const checkboxes = document.querySelectorAll('.filter-chk');
+      checkboxes.forEach(cb => cb.checked = master.checked);
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const dateVal = document.getElementById('filter-date').value;
+      const chkAll = document.getElementById('chk-all').checked;
+      const checkboxes = document.querySelectorAll('.filter-chk');
+      
+      let selectedPoints = [];
+      if (chkAll) {
+        selectedPoints = [1, 2, 3];
+      } else {
+        checkboxes.forEach(cb => {
+          if (cb.checked) selectedPoints.push(parseInt(cb.value));
+        });
+      }
+
+      const listEl = document.getElementById('history-list');
+      let filtered = qcRecords.filter(r => r.date === dateVal && selectedPoints.includes(r.point));
+
+      if (filtered.length === 0) {
+        listEl.innerHTML = `<div class="p-6 text-center text-gray-400 bg-amber-50/40 rounded-2xl text-xs">ไม่พบข้อมูลการบันทึกตามเงื่อนไขที่เลือก</div>`;
+        return;
+      }
+
+      listEl.innerHTML = filtered.map(r => `
+        <div class="p-3.5 rounded-2xl bg-amber-50/40 border border-amber-100 space-y-2 shadow-sm">
+          <div class="flex justify-between items-center text-xs">
+            <span class="font-bold text-[#8B4513]">📍 ${r.pointName}</span>
+            <span class="text-gray-500">${r.date} | ${r.time} น.</span>
+          </div>
+          <div class="text-xs bg-white p-2.5 rounded-xl border border-amber-100">
+            <div class="font-semibold">${r.detail}</div>
+            ${r.note ? `<div class="text-gray-500 mt-1">หมายเหตุ: ${r.note}</div>` : ''}
+          </div>
+          ${r.photo ? `<div class="mt-2"><img src="${r.photo}" onclick="showModal('${r.photo}')" class="h-20 w-full object-cover rounded-xl border border-amber-200 cursor-pointer hover:opacity-90 transition" /></div>` : ''}
+        </div>
+      `).join('');
+    }
+
+    function setSummaryRange(range) {
+      currentSummaryRange = range;
+      document.getElementById('btn-range-week').className = range === 'week' ? 'px-3 py-1 rounded-lg text-xs font-bold bg-[#8B4513] text-white transition' : 'px-3 py-1 rounded-lg text-xs font-semibold text-amber-900 transition';
+      document.getElementById('btn-range-month').className = range === 'month' ? 'px-3 py-1 rounded-lg text-xs font-bold bg-[#8B4513] text-white transition' : 'px-3 py-1 rounded-lg text-xs font-semibold text-amber-900 transition';
+      renderSummary();
+    }
+
+    function renderSummary() {
+      const now = new Date();
+      const daysLimit = currentSummaryRange === 'week' ? 7 : 30;
+      
+      const filtered = qcRecords.filter(r => {
+        const rDate = new Date(r.date);
+        const diffDays = (now - rDate) / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= daysLimit;
+      });
+
+      const total = filtered.length;
+      const passed = filtered.filter(r => r.status === 'ผ่านเกณฑ์').length;
+      const warned = total - passed;
+      const passRate = total > 0 ? Math.round((passed / total) * 100) : 0;
+
+      document.getElementById('sum-total-count').innerText = total;
+      document.getElementById('sum-pass-rate').innerText = passRate + '%';
+      document.getElementById('sum-pass-count').innerText = `${passed} รายการ`;
+      document.getElementById('sum-warn-count').innerText = warned;
+
+      const p1Count = filtered.filter(r => r.point === 1).length;
+      const p2Count = filtered.filter(r => r.point === 2).length;
+      const p3Count = filtered.filter(r => r.point === 3).length;
+
+      const p1Pct = total > 0 ? Math.round((p1Count / total) * 100) : 0;
+      const p2Pct = total > 0 ? Math.round((p2Count / total) * 100) : 0;
+      const p3Pct = total > 0 ? Math.round((p3Count / total) * 100) : 0;
+
+      document.getElementById('stat-p1').innerText = `${p1Count} ครั้ง (${p1Pct}%)`;
+      document.getElementById('bar-p1').style.width = p1Pct + '%';
+
+      document.getElementById('stat-p2').innerText = `${p2Count} ครั้ง (${p2Pct}%)`;
+      document.getElementById('bar-p2').style.width = p2Pct + '%';
+
+      document.getElementById('stat-p3').innerText = `${p3Count} ครั้ง (${p3Pct}%)`;
+      document.getElementById('bar-p3').style.width = p3Pct + '%';
+
+      const rangeText = currentSummaryRange === 'week' ? 'สัปดาห์นี้' : 'เดือนนี้';
+      const insightEl = document.getElementById('summary-insight-text');
+      
+      if (total === 0) {
+        insightEl.innerText = `ในช่วง${rangeText}ที่ผ่านมา ยังไม่มีการบันทึกข้อมูลการตรวจสอบคุณภาพ ขอแนะนำให้ทีมงานทยอยบันทึกข้อมูลอย่างสม่ำเสมอเพื่อให้ระบบสามารถประเมินผลและนำไปใช้ในรายงาน ปวส.2 ได้อย่างแม่นยำ`;
+      } else {
+        insightEl.innerText = `ผลการวิเคราะห์คุณภาพการผลิตน้ำตาลมะพร้าว "${rangeText}": มีการบันทึกข้อมูลรวมทั้งสิ้น ${total} รายการ ผ่านเกณฑ์มาตรฐานคิดเป็น ${passRate}% โดยจุดที่มีการตรวจสอบหนาแน่นที่สุดคือจุด${p1Count >= p2Count && p1Count >= p3Count ? 'อุณหภูมิ' : p2Count >= p3Count ? 'เช็กถาด' : 'บรรจุภัณฑ์'} ผลการดำเนินงานอยู่ในเกณฑ์เรียบร้อย เหมาะสำหรับนำไปอ้างอิงในบทสรุปผลการดำเนินโครงการ ปวส.2`;
+      }
+    }
+
+    function showModal(src) {
+      document.getElementById('modal-img').src = src;
+      document.getElementById('photo-modal').classList.remove('hidden');
+    }
+
+    function exportCSV() {
+      let csv = 'ID,Date,Time,Point,Detail,Status,Note\n';
+      qcRecords.forEach(r => {
+        csv += `${r.id},${r.date},${r.time},${r.pointName},"${r.detail}",${r.status},"${r.note || ''}"\n`;
+      });
+      const blob = new Blob(["\ufeff" + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `OhCharoenporn_QC_${todayStr}.csv`;
+      a.click();
+    }
+  </script>
+</body>
+</html>
